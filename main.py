@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 from src.Osintgram import Osintgram
 import argparse
 from src import printcolors as pc
 import sys
 import signal
 import readline
-
 commands = ["quit", "exit", "list", "help", "addrs", "captions", "comments", "followers",
             "followings", "fwersemail", "fwingsemail", "hashtags", "info", "likes",
             "mediatype", "photodes", "photos", "propic", "stories", "tagged", "target",
             "wcommented", "wtagged"]
-
-
 def printlogo():
     pc.printout("________         .__        __                               \n", pc.YELLOW)
     pc.printout("\_____  \   _____|__| _____/  |_  ________________    _____  \n", pc.YELLOW)
@@ -22,15 +18,13 @@ def printlogo():
     pc.printout("\_______  /____  >__|___|  /__| \___  /|__|  (____  /__|_|  /\n", pc.YELLOW)
     pc.printout("        \/     \/        \/    /_____/            \/      \/ \n", pc.YELLOW)
     print('\n')
-    pc.printout("Version 1.0.1 - Developed by Giuseppe Criscione\n\n", pc.YELLOW)
+    pc.printout("Version 1.0 - Developed by Giuseppe Criscione\n\n", pc.YELLOW)
     pc.printout("Type 'list' to show all allowed commands\n")
     pc.printout("Type 'FILE=y' to save results to files like '<target username>_<command>.txt (deafult is disabled)'\n")
     pc.printout("Type 'FILE=n' to disable saving to files'\n")
     pc.printout("Type 'JSON=y' to export results to a JSON files like '<target username>_<command>.json (deafult is "
                 "disabled)'\n")
     pc.printout("Type 'JSON=n' to disable exporting to files'\n")
-
-
 def cmdlist():
     pc.printout("FILE=y/n\t")
     print("Enable/disable output in a '<target username>_<command>.txt' file'")
@@ -74,13 +68,9 @@ def cmdlist():
     print("Get a list of user who commented target's photos")
     pc.printout("wtagged\t\t")
     print("Get a list of user who tagged target")
-
-
 def signal_handler(sig, frame):
     pc.printout("\nGoodbye!\n", pc.RED)
     sys.exit(0)
-
-
 def completer(text, state):
     options = [i for i in commands if i.startswith(text)]
     if state < len(options):
@@ -88,23 +78,45 @@ def completer(text, state):
     else:
         return None
 
+def _quit():
+    pc.printout("Goodbye!\n", pc.RED)
+    sys.exit(0)
+
 
 signal.signal(signal.SIGINT, signal_handler)
 readline.parse_and_bind("tab: complete")
 readline.set_completer(completer)
-
 printlogo()
-
 parser = argparse.ArgumentParser(description='Osintgram is a OSINT tool on Instagram. It offers an interactive shell '
-                                             'to perform analysis on Instagram account of any users by its nickname ')
-parser.add_argument('id', type=str,  # var = id
-                    help='username')
-parser.add_argument('-j', '--json', help='save commands output as JSON file', action='store_true')
-parser.add_argument('-f', '--file', help='save output in a file', action='store_true')
-
-args = parser.parse_args()
 
 api = Osintgram(args.id, args.file, args.json)
+
+
+commands = {
+    'list':         cmdlist,
+    'help':         cmdlist,
+    'quit':         _quit,
+    'exit':         _quit,
+    'addrs':        api.get_addrs,
+    'captions':     api.get_captions,
+    'comments':     api.get_total_comments,
+    'followers':    api.get_followers,
+    'followings':   api.get_followings,
+    'fwersemail':   api.get_fwersemail,
+    'fwingsemail':  api.get_fwingsemail,
+    'hashtags':     api.get_hashtags,
+    'info':         api.get_user_info,
+    'likes':        api.get_total_likes,
+    'mediatype':    api.get_media_type,
+    'photodes':     api.get_photo_description,
+    'photos':       api.get_user_photo,
+    'propic':       api.get_user_propic,
+    'stories':      api.get_user_stories,
+    'tagged':       api.get_people_tagged_by_user,
+    'target':       api.change_target,
+    'wcommented':   api.get_people_who_commented,
+    'wtagged':      api.get_people_who_tagged
+}
 
 while True:
     pc.printout("Run a command: ", pc.YELLOW)
@@ -152,6 +164,11 @@ while True:
         api.get_people_who_commented()
     elif cmd == "wtagged":
         api.get_people_who_tagged()
+
+    _cmd = commands.get(cmd)
+
+    if _cmd:
+        _cmd()    
     elif cmd == "FILE=y":
         api.set_write_file(True)
     elif cmd == "FILE=n":
